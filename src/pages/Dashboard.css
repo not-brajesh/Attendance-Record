@@ -1,0 +1,262 @@
+/* ---------- Dashboard ---------- */
+.dashboard {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.dashboard-header {
+  margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text, #1d1d1f);
+}
+
+.dashboard-sub {
+  margin: 4px 0 0;
+  color: var(--secondary, #86868b);
+  font-size: 0.95rem;
+}
+
+.dashboard-loading {
+  padding: 60px;
+  text-align: center;
+  color: var(--secondary, #86868b);
+  font-size: 0.95rem;
+}
+
+/* ---------- Stat grids ---------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.month-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+/* ---------- Sections ---------- */
+.dashboard-section {
+  margin-bottom: 28px;
+}
+
+.section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text, #1d1d1f);
+  margin: 0 0 12px;
+  letter-spacing: -0.2px;
+}
+
+/* ---------- Two-column layout ---------- */
+.dashboard-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.dashboard-panel {
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #e5e5e7);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* ---------- Student table ---------- */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.dash-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--secondary, #86868b);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border, #e5e5e7);
+}
+
+.dash-table td {
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f2;
+  color: var(--text, #1d1d1f);
+}
+
+.dash-table tr:last-child td {
+  border-bottom: none;
+}
+
+.cell-strong {
+  font-weight: 600;
+}
+
+.cell-earn {
+  font-weight: 700;
+  color: #059669;
+}
+
+/* ---------- Today's list ---------- */
+.today-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.today-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f2;
+}
+
+.today-item:last-child {
+  border-bottom: none;
+}
+
+.today-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.today-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text, #1d1d1f);
+}
+
+.today-time {
+  font-size: 0.82rem;
+  color: var(--secondary, #86868b);
+}
+
+.today-duration {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #007aff;
+  background: rgba(0, 122, 255, 0.1);
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+/* ---------- Empty state ---------- */
+.empty-text {
+  color: var(--secondary, #86868b);
+  font-size: 0.92rem;
+  text-align: center;
+  padding: 20px 0;
+  margin: 0;
+}
+
+/* ---------- Responsive: Tablet ---------- */
+@media (max-width: 860px) {
+  .dashboard {
+    padding: 16px;
+  }
+
+  .dashboard-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* ---------- Responsive: Mobile ---------- */
+@media (max-width: 700px) {
+  .dashboard {
+    padding: 4px 0 0;
+  }
+
+  .dashboard-header {
+    margin-bottom: 20px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 28px;
+    line-height: 1.15;
+  }
+
+  .dashboard-sub {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .stats-grid,
+  .month-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+
+  .stats-grid .stat-card {
+    width: 100%;
+  }
+
+  .dashboard-section {
+    margin-bottom: 22px;
+  }
+
+  .dashboard-columns {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .dashboard-panel {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+  }
+
+  .dash-table {
+    min-width: 520px;
+  }
+
+  .today-item {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .today-main {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .today-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .today-duration {
+    flex-shrink: 0;
+    padding: 5px 9px;
+    font-size: 0.78rem;
+  }
+}

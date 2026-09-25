@@ -1,0 +1,452 @@
+.reports-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-eyebrow {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: #86868b;
+  margin: 0 0 4px;
+}
+
+.page-subtitle {
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+/* ---------- Filter card ---------- */
+.filter-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+  margin-bottom: 20px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-chip {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #111827;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s;
+  font-family: inherit;
+}
+
+.btn-chip:hover {
+  background: #e5e7eb;
+}
+
+/* ---------- StatCards row ---------- */
+.report-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+
+@media (max-width: 700px) {
+  .report-stats {
+    grid-template-columns: 1fr;
+  }
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Buttons ---------- */
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s;
+  font-family: inherit;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s;
+  font-family: inherit;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 16px 0 24px;
+}
+
+/* ---------- Table ---------- */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+  margin-bottom: 24px;
+}
+
+.data-table {
+  min-width: 850px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table th {
+  background: #f9fafb;
+  color: #374151;
+  text-align: left;
+  padding: 12px 14px;
+  font-weight: 700;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #1f2937;
+}
+
+.data-table tbody tr:hover td {
+  background: #f9fafb;
+}
+
+/* ---------- Row action buttons ---------- */
+.row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s;
+  font-family: inherit;
+  color: #111827;
+}
+
+.btn-icon:hover {
+  background: #e5e7eb;
+}
+
+.btn-icon.danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.btn-icon.danger:hover {
+  background: #fee2e2;
+}
+
+/* ---------- Edit card ---------- */
+.edit-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+}
+
+.edit-card h2 {
+  margin: 0 0 18px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* ---------- Form sections ---------- */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-section label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.form-section input,
+.form-section select {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+  color: #111827;
+}
+
+.form-section input:focus,
+.form-section select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 500px) {
+  .time-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Empty state ---------- */
+.empty-state {
+  padding: 50px 20px;
+  text-align: center;
+  color: #86868b;
+}
+
+.empty-state h3 {
+  margin: 0 0 6px;
+  color: #1d1d1f;
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+/* ---------- Responsive: Mobile ---------- */
+@media (max-width: 700px) {
+  .reports-page {
+    width: 100%;
+    max-width: 100%;
+    padding: 4px 0 0;
+  }
+
+  /* ---------- Header ---------- */
+
+  .page-header {
+    margin-bottom: 20px;
+  }
+
+  .page-header h1 {
+    font-size: 28px;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+  }
+
+  .page-eyebrow {
+    font-size: 11px;
+    letter-spacing: 1.2px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ---------- Filter Card ---------- */
+
+  .filter-card {
+    padding: 17px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .filter-grid .form-section input,
+  .filter-grid .form-section select {
+    width: 100%;
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  .filter-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .btn-chip {
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  /* ---------- Report Stats ---------- */
+
+  .report-stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 18px 0;
+  }
+
+  .report-stats .stat-card {
+    width: 100%;
+  }
+
+  /* ---------- Export / Actions ---------- */
+
+  .report-actions {
+    margin: 14px 0 18px;
+  }
+
+  .report-actions .btn-primary {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  /* ---------- Tables ---------- */
+
+  .table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 14px;
+    margin-bottom: 18px;
+  }
+
+  .data-table {
+    min-width: 850px;
+    font-size: 13px;
+  }
+
+  .data-table th {
+    padding: 11px 12px;
+    font-size: 12px;
+  }
+
+  .data-table td {
+    padding: 11px 12px;
+  }
+
+  /* ---------- Row Actions ---------- */
+
+  .row-actions {
+    gap: 6px;
+  }
+
+  .btn-icon {
+    min-height: 40px;
+    padding: 7px 11px;
+    font-size: 12px;
+  }
+
+  /* ---------- Edit Card ---------- */
+
+  .edit-card {
+    padding: 18px;
+    margin-bottom: 18px;
+    border-radius: 16px;
+  }
+
+  .edit-card h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .time-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .edit-actions {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .edit-actions button {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  /* ---------- Forms ---------- */
+
+  .form-section {
+    gap: 7px;
+  }
+
+  .form-section input,
+  .form-section select {
+    width: 100%;
+    min-height: 46px;
+    font-size: 16px;
+    padding: 0 12px;
+  }
+
+  /* ---------- Empty State ---------- */
+
+  .empty-state {
+    padding: 45px 18px;
+  }
+
+  .empty-state h3 {
+    font-size: 18px;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
