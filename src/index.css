@@ -84,3 +84,12 @@ table {
     min-height: 44px;
   }
 }
+
+@media (max-width: 768px) {
+
+  main,
+  .app-container,
+  body {
+    padding-bottom: 80px !important;
+  }
+}

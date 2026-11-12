@@ -13,7 +13,8 @@ import "./Students.css";
 
 function Students() {
   const [name, setName] = useState("");
-  const [hourlyRate, setHourlyRate] = useState("");
+  const [paymentType, setPaymentType] = useState("hourly");
+  const [paymentAmount, setPaymentAmount] = useState("");
   const [className, setClassName] = useState("");
   const [students, setStudents] = useState([]);
   const [attendance, setAttendance] = useState([]);
@@ -40,12 +41,21 @@ function Students() {
     await db.students.add({
       name: name.trim(),
       className: className.trim(),
-      hourlyRate: Number(hourlyRate) || 0,
+      paymentType,
+      paymentAmount: Number(paymentAmount) || 0,
+
+      // Keep this for compatibility with existing hourly calculations/data
+      hourlyRate:
+        paymentType === "hourly"
+          ? Number(paymentAmount) || 0
+          : 0,
+
       createdAt: new Date().toISOString(),
     });
 
     setName("");
-    setHourlyRate("");
+    setPaymentType("hourly");
+    setPaymentAmount("");
     setClassName("");
     setShowForm(false);
 
@@ -95,13 +105,31 @@ function Students() {
       (s) => s.id === studentId
     );
 
+    let earning = 0;
+
+    if (
+      !student?.paymentType ||
+      student.paymentType === "hourly"
+    ) {
+      earning = calculateEarning(
+        minutes,
+        student?.paymentAmount ?? student?.hourlyRate
+      );
+    } else if (student.paymentType === "daily") {
+      earning =
+        records.length *
+        Number(student.paymentAmount || 0);
+    } else if (student.paymentType === "monthly") {
+      earning =
+        records.length > 0
+          ? Number(student.paymentAmount || 0)
+          : 0;
+    }
+
     return {
       classes: records.length,
       minutes,
-      earning: calculateEarning(
-        minutes,
-        student?.hourlyRate
-      ),
+      earning,
     };
   };
 
@@ -158,14 +186,42 @@ function Students() {
             </div>
 
             <div className="form-field">
-              <label>Hourly Rate</label>
+              <label>Payment Type</label>
+
+              <select
+                value={paymentType}
+                onChange={(e) =>
+                  setPaymentType(e.target.value)
+                }
+              >
+                <option value="hourly">Hourly</option>
+                <option value="daily">Daily</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label>
+                {paymentType === "hourly"
+                  ? "Hourly Rate"
+                  : paymentType === "daily"
+                  ? "Daily Rate"
+                  : "Monthly Fee"}
+              </label>
 
               <input
                 type="number"
-                placeholder="₹300"
-                value={hourlyRate}
+                min="0"
+                placeholder={
+                  paymentType === "hourly"
+                    ? "₹300"
+                    : paymentType === "daily"
+                    ? "₹500"
+                    : "₹5000"
+                }
+                value={paymentAmount}
                 onChange={(e) =>
-                  setHourlyRate(e.target.value)
+                  setPaymentAmount(e.target.value)
                 }
               />
             </div>
@@ -239,10 +295,26 @@ function Students() {
                 </div>
 
                 <div className="student-rate">
-                  <span>Hourly Rate</span>
+                  <span>
+                    {student.paymentType === "daily"
+                      ? "Daily Rate"
+                      : student.paymentType === "monthly"
+                      ? "Monthly Fee"
+                      : "Hourly Rate"}
+                  </span>
 
                   <strong>
-                    ₹{student.hourlyRate || 0}
+                    ₹
+                    {Number(
+                      student.paymentAmount ??
+                        student.hourlyRate ??
+                        0
+                    ).toLocaleString("en-IN")}
+                    {student.paymentType === "hourly"
+                      ? "/hr"
+                      : student.paymentType === "daily"
+                      ? "/day"
+                      : "/month"}
                   </strong>
                 </div>
 

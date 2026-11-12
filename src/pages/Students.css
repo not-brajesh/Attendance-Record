@@ -46,7 +46,7 @@
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
@@ -61,15 +61,25 @@
   font-weight: 600;
 }
 
-.form-field input {
-  padding: 12px;
+.form-field input,
+.form-field select {
+  width: 100%;
+  height: 46px;
+  padding: 0 12px;
   border: 1px solid #d2d2d7;
   border-radius: 10px;
   outline: none;
+  background: #ffffff;
+  color: #1d1d1f;
+  font-size: 15px;
+  font-family: inherit;
+  box-sizing: border-box;
 }
 
-.form-field input:focus {
+.form-field input:focus,
+.form-field select:focus {
   border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.10);
 }
 
 .form-actions {
@@ -261,10 +271,14 @@
     grid-template-columns: 1fr;
   }
 
-  .form-field input {
+  .form-field input,
+  .form-field select {
     width: 100%;
     min-height: 46px;
+    height: 46px;
     font-size: 16px;
+    padding: 0 12px;
+    box-sizing: border-box;
   }
 
   .form-actions {

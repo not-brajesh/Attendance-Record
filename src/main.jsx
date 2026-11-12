@@ -1,10 +1,9 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App.jsx";
-import "./index.css";
+import Dexie from "dexie";
 
-createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-);
+export const db = new Dexie("AttendanceRecordDB");
+
+db.version(2).stores({
+  students: "++id, name",
+  attendance: "++id, studentId, date, startTime, endTime",
+  downloads: "++id, fileName, createdAt",
+});

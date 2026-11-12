@@ -29,6 +29,54 @@ export const formatDuration = (minutes) => {
   return `${h}h ${m}m`;
 };
 
+// Backward-compatible helper (jab tak saare pages update nahi ho jaate)
 export const calculateEarning = (minutes, hourlyRate) => {
-  return (minutes / 60) * Number(hourlyRate || 0);
+  return Math.round((minutes / 60) * Number(hourlyRate || 0));
+};
+
+// ✅ Naya unified earning calculator (Hourly, Per Class, Fixed Monthly)
+export const calculateStudentEarning = (student, totalMinutes = 0, classCount = 0) => {
+  if (!student) return 0;
+
+  const type = student.paymentType || "hourly";
+  const amount = Number(student.paymentAmount ?? student.hourlyRate ?? 0);
+
+  if (type === "per_class" || type === "daily") {
+    return classCount * amount;
+  }
+
+  if (type === "monthly") {
+    return classCount > 0 ? amount : 0;
+  }
+
+  // Default: hourly
+  return Math.round((totalMinutes / 60) * amount);
+};
+
+// ✅ UI mein clean badge aur formatted rate dikhane ke liye helper
+export const getPaymentDetails = (student) => {
+  const type = student?.paymentType || "hourly";
+  const amount = Number(student?.paymentAmount ?? student?.hourlyRate ?? 0);
+
+  if (type === "per_class" || type === "daily") {
+    return {
+      type: "per_class",
+      label: "Per Class",
+      rateDisplay: `₹${amount} / class`,
+    };
+  }
+
+  if (type === "monthly") {
+    return {
+      type: "monthly",
+      label: "Fixed Monthly",
+      rateDisplay: `₹${amount} / month`,
+    };
+  }
+
+  return {
+    type: "hourly",
+    label: "Per Hour",
+    rateDisplay: `₹${amount} / hr`,
+  };
 };
