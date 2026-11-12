@@ -1,9 +1,16 @@
-import Dexie from "dexie";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.jsx";
+import "./index.css";
 
-export const db = new Dexie("AttendanceRecordDB");
-
-db.version(2).stores({
-  students: "++id, name",
-  attendance: "++id, studentId, date, startTime, endTime",
-  downloads: "++id, fileName, createdAt",
-});
+// Entry point for Vite
+const container = document.getElementById("root");
+if (!container) {
+  throw new Error("Root element not found");
+}
+const root = createRoot(container);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

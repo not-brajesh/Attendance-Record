@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { db } from "../db/database";
 import {
   calculateMinutes,
-  calculateEarning,
+  calculateStudentEarning,
   formatDuration,
+  getPaymentDetails,
 } from "../utils/calculations";
+import { getMonthStart, getMonthEnd } from "../utils/dateUtils";
 import {
-  getMonthStart,
-  getMonthEnd,
-} from "../utils/dateUtils";
+  Users,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import "./Students.css";
 
 function Students() {
@@ -25,11 +28,16 @@ function Students() {
   }, []);
 
   const loadData = async () => {
-    const studentData = await db.students.toArray();
-    const attendanceData = await db.attendance.toArray();
-
-    setStudents(studentData);
-    setAttendance(attendanceData);
+    try {
+      const studentData = await db.students.toArray();
+      const attendanceData = await db.attendance.toArray();
+      setStudents(studentData);
+      setAttendance(attendanceData);
+    } catch (err) {
+      console.error("Students: failed to load data from IndexedDB", err);
+      setStudents([]);
+      setAttendance([]);
+    }
   };
 
   const addStudent = async () => {
@@ -43,13 +51,7 @@ function Students() {
       className: className.trim(),
       paymentType,
       paymentAmount: Number(paymentAmount) || 0,
-
-      // Keep this for compatibility with existing hourly calculations/data
-      hourlyRate:
-        paymentType === "hourly"
-          ? Number(paymentAmount) || 0
-          : 0,
-
+      hourlyRate: paymentType === "hourly" ? Number(paymentAmount) || 0 : 0,
       createdAt: new Date().toISOString(),
     });
 
@@ -63,20 +65,15 @@ function Students() {
   };
 
   const deleteStudent = async (id) => {
-    const student = students.find(
-      (s) => s.id === id
-    );
-
+    const student = students.find((s) => s.id === id);
     if (!student) return;
 
     const confirmDelete = confirm(
       `Delete ${student.name}?\n\nAttendance records will remain.`
     );
-
     if (!confirmDelete) return;
 
     await db.students.delete(id);
-
     loadData();
   };
 
@@ -93,38 +90,12 @@ function Students() {
 
     const minutes = records.reduce(
       (total, record) =>
-        total +
-        calculateMinutes(
-          record.startTime,
-          record.endTime
-        ),
+        total + calculateMinutes(record.startTime, record.endTime),
       0
     );
 
-    const student = students.find(
-      (s) => s.id === studentId
-    );
-
-    let earning = 0;
-
-    if (
-      !student?.paymentType ||
-      student.paymentType === "hourly"
-    ) {
-      earning = calculateEarning(
-        minutes,
-        student?.paymentAmount ?? student?.hourlyRate
-      );
-    } else if (student.paymentType === "daily") {
-      earning =
-        records.length *
-        Number(student.paymentAmount || 0);
-    } else if (student.paymentType === "monthly") {
-      earning =
-        records.length > 0
-          ? Number(student.paymentAmount || 0)
-          : 0;
-    }
+    const student = students.find((s) => s.id === studentId);
+    const earning = calculateStudentEarning(student, minutes, records.length);
 
     return {
       classes: records.length,
@@ -135,12 +106,12 @@ function Students() {
 
   return (
     <div className="students-page">
-
       <div className="students-header">
         <div>
+          <p className="page-eyebrow">Learners</p>
           <h1>Students</h1>
-          <p>
-            Manage your students and tuition details
+          <p className="page-subtitle">
+            Manage your students, fee structures, and tuition details.
           </p>
         </div>
 
@@ -148,220 +119,160 @@ function Students() {
           className="add-student-btn"
           onClick={() => setShowForm(!showForm)}
         >
-          + Add Student
+          <Plus size={16} strokeWidth={2.4} />
+          <span>Add Student</span>
         </button>
       </div>
 
       {showForm && (
-        <div className="student-form">
-
-          <h2>Add Student</h2>
+        <div className="student-form card">
+          <div className="form-title-row">
+            <h2>New Student</h2>
+            <p className="form-sub">Set up student profile and fee model</p>
+          </div>
 
           <div className="form-grid">
-
             <div className="form-field">
               <label>Student Name</label>
-
               <input
                 type="text"
-                placeholder="e.g. Rahul"
+                placeholder="e.g. Rahul Sharma"
                 value={name}
-                onChange={(e) =>
-                  setName(e.target.value)
-                }
+                onChange={(e) => setName(e.target.value)}
               />
             </div>
 
             <div className="form-field">
-              <label>Class</label>
-
+              <label>Class / Grade</label>
               <input
                 type="text"
-                placeholder="e.g. Class 7"
+                placeholder="e.g. Class 10"
                 value={className}
-                onChange={(e) =>
-                  setClassName(e.target.value)
-                }
+                onChange={(e) => setClassName(e.target.value)}
               />
             </div>
 
             <div className="form-field">
-              <label>Payment Type</label>
-
+              <label>Payment Model</label>
               <select
                 value={paymentType}
-                onChange={(e) =>
-                  setPaymentType(e.target.value)
-                }
+                onChange={(e) => setPaymentType(e.target.value)}
               >
-                <option value="hourly">Hourly</option>
-                <option value="daily">Daily</option>
-                <option value="monthly">Monthly</option>
+                <option value="hourly">Hourly Rate</option>
+                <option value="daily">Per Class (Flat)</option>
+                <option value="monthly">Fixed Monthly</option>
               </select>
             </div>
 
             <div className="form-field">
               <label>
                 {paymentType === "hourly"
-                  ? "Hourly Rate"
+                  ? "Hourly Rate (₹)"
                   : paymentType === "daily"
-                  ? "Daily Rate"
-                  : "Monthly Fee"}
+                  ? "Per Class Fee (₹)"
+                  : "Monthly Fee (₹)"}
               </label>
-
               <input
                 type="number"
                 min="0"
                 placeholder={
                   paymentType === "hourly"
-                    ? "₹300"
+                    ? "400"
                     : paymentType === "daily"
-                    ? "₹500"
-                    : "₹5000"
+                    ? "500"
+                    : "4000"
                 }
                 value={paymentAmount}
-                onChange={(e) =>
-                  setPaymentAmount(e.target.value)
-                }
+                onChange={(e) => setPaymentAmount(e.target.value)}
               />
             </div>
-
           </div>
 
           <div className="form-actions">
-            <button
-              className="cancel-btn"
-              onClick={() => setShowForm(false)}
-            >
+            <button className="cancel-btn" onClick={() => setShowForm(false)}>
               Cancel
             </button>
-
-            <button
-              className="save-btn"
-              onClick={addStudent}
-            >
-              Add Student
+            <button className="save-btn" onClick={addStudent}>
+              <Plus size={16} strokeWidth={2.4} />
+              <span>Save Student</span>
             </button>
           </div>
         </div>
       )}
 
       {students.length === 0 ? (
-        <div className="empty-students">
-          <h2>No students yet</h2>
+        <div className="empty-students card">
+          <div className="empty-icon-wrap">
+            <Users size={32} strokeWidth={1.8} />
+          </div>
+          <h2>No students enrolled yet</h2>
           <p>
-            Add your first student to start tracking
-            tuition classes.
+            Add your first learner to start logging sessions and tracking
+            tuition earnings.
           </p>
-
-          <button
-            onClick={() => setShowForm(true)}
-          >
-            + Add Student
+          <button className="add-student-btn" onClick={() => setShowForm(true)}>
+            <Plus size={16} strokeWidth={2.4} />
+            <span>Add Student</span>
           </button>
         </div>
       ) : (
         <div className="students-grid">
-
           {students.map((student) => {
-
-            const stats = getStudentStats(
-              student.id
-            );
+            const stats = getStudentStats(student.id);
+            const paymentDetails = getPaymentDetails(student);
+            const initial = student.name ? student.name.charAt(0).toUpperCase() : "?";
 
             return (
-              <div
-                className="student-card"
-                key={student.id}
-              >
-
+              <div className="student-card" key={student.id}>
                 <div className="student-card-top">
-
-                  <div className="student-avatar">
-                    {student.name
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
-
-                  <div>
+                  <div className="student-avatar">{initial}</div>
+                  <div className="student-info-main">
                     <h2>{student.name}</h2>
-
-                    <p>
-                      {student.className ||
-                        "Class not specified"}
-                    </p>
+                    <span className="student-class-tag">
+                      {student.className || "Standard"}
+                    </span>
                   </div>
-
                 </div>
 
                 <div className="student-rate">
-                  <span>
-                    {student.paymentType === "daily"
-                      ? "Daily Rate"
-                      : student.paymentType === "monthly"
-                      ? "Monthly Fee"
-                      : "Hourly Rate"}
-                  </span>
-
-                  <strong>
-                    ₹
-                    {Number(
-                      student.paymentAmount ??
-                        student.hourlyRate ??
-                        0
-                    ).toLocaleString("en-IN")}
-                    {student.paymentType === "hourly"
-                      ? "/hr"
-                      : student.paymentType === "daily"
-                      ? "/day"
-                      : "/month"}
+                  <span className="rate-label">{paymentDetails.label}</span>
+                  <strong className="rate-amount">
+                    {paymentDetails.rateDisplay}
                   </strong>
                 </div>
 
                 <div className="student-stats">
-
-                  <div>
-                    <span>Classes</span>
-                    <strong>
-                      {stats.classes}
+                  <div className="stat-pill">
+                    <span className="stat-pill-label">Classes</span>
+                    <strong className="stat-pill-val">{stats.classes}</strong>
+                  </div>
+                  <div className="stat-pill">
+                    <span className="stat-pill-label">Time</span>
+                    <strong className="stat-pill-val">
+                      {formatDuration(stats.minutes)}
                     </strong>
                   </div>
-
-                  <div>
-                    <span>Hours</span>
-                    <strong>
-                      {formatDuration(
-                        stats.minutes
-                      )}
+                  <div className="stat-pill">
+                    <span className="stat-pill-label">This Month</span>
+                    <strong className="stat-pill-val stat-pill-val--earn">
+                      ₹{stats.earning.toLocaleString("en-IN")}
                     </strong>
                   </div>
-
-                  <div>
-                    <span>Earnings</span>
-                    <strong>
-                      ₹{stats.earning.toFixed(0)}
-                    </strong>
-                  </div>
-
                 </div>
 
-                <div className="student-actions">
-
+                <div className="student-card-actions">
                   <button
                     className="delete-student"
-                    onClick={() =>
-                      deleteStudent(student.id)
-                    }
+                    onClick={() => deleteStudent(student.id)}
+                    title="Delete Student"
                   >
-                    Delete
+                    <Trash2 size={14} />
+                    <span>Delete</span>
                   </button>
-
                 </div>
-
               </div>
             );
           })}
-
         </div>
       )}
     </div>

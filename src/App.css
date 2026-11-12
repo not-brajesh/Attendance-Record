@@ -1,44 +1,29 @@
-/* ============================================ */
-/* App Layout: Navbar + Content                  */
-/* ============================================ */
+/* ══════════════════════════════════════════════════
+   App Layout — sidebar + scrollable content
+   ══════════════════════════════════════════════════ */
 
+/* ── Desktop: content pushed right of 240 px sidebar ── */
 .app-content {
   margin-left: 240px;
   min-height: 100vh;
-  padding: 32px;
+  padding: 32px 32px 48px;
   box-sizing: border-box;
 }
 
-/* Mobile */
-@media (max-width: 700px) {
+/* ── Mobile: full-width, bottom-padded for floating pill nav ── */
+@media (max-width: 768px) {
   .app-content {
     margin-left: 0;
     min-height: 100dvh;
-
-    /*
-      Bottom navigation ke liye space.
-      Isse last content navbar ke peeche hide nahi hoga.
-    */
-    padding: 20px 16px 100px;
-
+    padding: 20px 16px 104px;
     width: 100%;
   }
 }
 
-/* Small phones */
+/* ── Very small phones ── */
 @media (max-width: 380px) {
   .app-content {
     padding-left: 12px;
     padding-right: 12px;
-    padding-bottom: 100px;
-  }
-}
-
-@media (max-width: 768px) {
-
-  main,
-  .app-container,
-  body {
-    padding-bottom: 80px !important;
   }
 }

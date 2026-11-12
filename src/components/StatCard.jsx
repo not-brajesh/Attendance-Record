@@ -1,13 +1,18 @@
+import React from "react";
 import "./StatCard.css";
 
-function StatCard({ label, value, icon, accent = false }) {
+function StatCard({ label, value, icon, variant = "brand", sublabel }) {
   return (
-    <div className={`stat-card ${accent ? "accent" : ""}`}>
-      {icon && <span className="stat-icon">{icon}</span>}
-
+    <div className={`stat-card stat-card--${variant}`}>
+      {icon && (
+        <div className={`stat-icon-wrap stat-icon--${variant}`}>
+          {icon}
+        </div>
+      )}
       <div className="stat-body">
         <p className="stat-label">{label}</p>
         <h3 className="stat-value">{value}</h3>
+        {sublabel && <span className="stat-sublabel">{sublabel}</span>}
       </div>
     </div>
   );

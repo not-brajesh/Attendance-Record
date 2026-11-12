@@ -1,12 +1,22 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { db } from "../db/database";
 import StatCard from "../components/StatCard";
 import {
   calculateMinutes,
   calculateEarning,
+  calculateStudentEarning,
   formatDuration,
 } from "../utils/calculations";
-import { getLocalDate, getMonthStart, getMonthEnd } from "../utils/dateUtils";
+import { getMonthStart, getMonthEnd, formatDate } from "../utils/dateUtils";
+import {
+  Users,
+  BookOpen,
+  Clock,
+  IndianRupee,
+  Plus,
+  ArrowUpRight,
+} from "lucide-react";
 import "./Dashboard.css";
 
 function Dashboard() {
@@ -20,34 +30,27 @@ function Dashboard() {
 
   const loadData = async () => {
     setLoading(true);
-
-    const studentData = await db.students.toArray();
-    const attendanceData = await db.attendance.toArray();
-
-    setStudents(studentData);
-    setAttendance(attendanceData);
-    setLoading(false);
+    try {
+      const studentData = await db.students.toArray();
+      const attendanceData = await db.attendance.toArray();
+      setStudents(studentData);
+      setAttendance(attendanceData);
+    } catch (err) {
+      console.error("Dashboard: failed to load data from IndexedDB", err);
+      setStudents([]);
+      setAttendance([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ---- Student lookup map (fast) ----
+  // Student lookup map
   const studentMap = {};
   students.forEach((s) => {
     studentMap[s.id] = s;
   });
 
-  // ---- Overall totals ----
-  const totalMinutes = attendance.reduce(
-    (t, r) => t + calculateMinutes(r.startTime, r.endTime),
-    0
-  );
-
-  const totalEarning = attendance.reduce((t, r) => {
-    const student = studentMap[r.studentId];
-    const mins = calculateMinutes(r.startTime, r.endTime);
-    return t + calculateEarning(mins, student?.hourlyRate);
-  }, 0);
-
-  // ---- This Month ----
+  // This Month range
   const monthStart = getMonthStart();
   const monthEnd = getMonthEnd();
 
@@ -60,163 +63,268 @@ function Dashboard() {
     0
   );
 
-  const monthEarning = monthRecords.reduce((t, r) => {
-    const student = studentMap[r.studentId];
-    const mins = calculateMinutes(r.startTime, r.endTime);
-    return t + calculateEarning(mins, student?.hourlyRate);
-  }, 0);
+  // Overall Minutes
+  const totalMinutes = attendance.reduce(
+    (t, r) => t + calculateMinutes(r.startTime, r.endTime),
+    0
+  );
 
-  // ---- Student-wise Summary ----
   const studentSummary = students
     .map((student) => {
-      const recs = attendance.filter((r) => r.studentId === student.id);
-
-      const minutes = recs.reduce(
+      const allRecs = attendance.filter((r) => r.studentId === student.id);
+      const allMins = allRecs.reduce(
         (t, r) => t + calculateMinutes(r.startTime, r.endTime),
         0
       );
+      const allEarning = calculateStudentEarning(student, allMins, allRecs.length);
+
+      const mRecs = monthRecords.filter((r) => r.studentId === student.id);
+      const mMins = mRecs.reduce(
+        (t, r) => t + calculateMinutes(r.startTime, r.endTime),
+        0
+      );
+      const mEarning = calculateStudentEarning(student, mMins, mRecs.length);
 
       return {
         id: student.id,
         name: student.name,
-        classes: recs.length,
-        hours: minutes / 60,
-        rate: Number(student.hourlyRate || 0),
-        earning: calculateEarning(minutes, student.hourlyRate),
+        className: student.className,
+        classes: allRecs.length,
+        hours: allMins / 60,
+        earning: allEarning,
+        monthClasses: mRecs.length,
+        monthHours: mMins / 60,
+        monthEarning: mEarning,
       };
     })
     .sort((a, b) => b.earning - a.earning);
 
-  // ---- Today's Classes ----
-  const today = getLocalDate();
+  const allTimeTotalEarning = studentSummary.reduce((sum, s) => sum + s.earning, 0);
+  const monthTotalEarning = studentSummary.reduce((sum, s) => sum + s.monthEarning, 0);
 
-  const todayRecords = attendance
-    .filter((r) => r.date === today)
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const maxStudentEarning = Math.max(...studentSummary.map((s) => s.earning), 1);
 
-  // ---- Loading state ----
+  // Recent 5 classes
+  const recentRecords = [...attendance]
+    .sort(
+      (a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime)
+    )
+    .slice(0, 5);
+
+  const getSessionEarning = (record, student) => {
+    if (!student) return 0;
+    if (student.paymentType === "daily" || student.paymentType === "per_class") {
+      return Number(student.paymentAmount || 0);
+    }
+    const mins = calculateMinutes(record.startTime, record.endTime);
+    return calculateEarning(mins, student.hourlyRate || student.paymentAmount);
+  };
+
+  const todayFormatted = new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const monthLabel = new Date().toLocaleDateString("en-IN", {
+    month: "short",
+    year: "numeric",
+  });
+
   if (loading) {
-    return <div className="dashboard-loading">Loading…</div>;
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner" />
+        <p>Loading overview…</p>
+      </div>
+    );
   }
 
   return (
     <div className="dashboard">
+      {/* ── 1. Top Header ── */}
       <header className="dashboard-header">
-        <h1>Dashboard</h1>
-        <p className="dashboard-sub">
-          {new Date().toLocaleDateString("en-IN", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
+        <div className="header-text-group">
+          <h1 className="dashboard-title">Dashboard</h1>
+          <p className="dashboard-sub">{todayFormatted}</p>
+        </div>
+        <Link to="/attendance" className="header-log-btn">
+          <Plus size={16} strokeWidth={2.5} />
+          <span>Log</span>
+        </Link>
       </header>
 
-      {/* -------- Row 1 — Overall Stats -------- */}
-      <section className="stats-grid">
-        <StatCard label="Students" value={students.length} icon="👥" />
-        <StatCard label="Total Classes" value={attendance.length} icon="📚" />
+      {/* ── 2. Hero Card: This Month's Summary ── */}
+      <section className="hero-summary-card">
+        <div className="hero-header">
+          <div className="hero-title-group">
+            <span className="page-eyebrow">Overview</span>
+            <h2 className="hero-title">This Month's Summary</h2>
+          </div>
+          <span className="month-badge">{monthLabel}</span>
+        </div>
+
+        <div className="hero-metrics-row">
+          <div className="hero-metric">
+            <span className="hero-metric-label">Classes</span>
+            <strong className="hero-metric-value">{monthRecords.length}</strong>
+          </div>
+          <div className="hero-divider" />
+          <div className="hero-metric">
+            <span className="hero-metric-label">Teaching Time</span>
+            <strong className="hero-metric-value">
+              {formatDuration(monthMinutes)}
+            </strong>
+          </div>
+          <div className="hero-divider" />
+          <div className="hero-metric">
+            <span className="hero-metric-label">Earnings</span>
+            <strong className="hero-metric-value hero-metric-value--earn">
+              ₹{monthTotalEarning.toLocaleString("en-IN")}
+            </strong>
+          </div>
+        </div>
+
+        <Link to="/attendance" className="hero-cta-btn">
+          <Plus size={18} strokeWidth={2.4} />
+          <span>Record Class</span>
+        </Link>
+      </section>
+
+      {/* ── 3. 2x2 Bento Metric Grid ── */}
+      <section className="bento-grid">
+        <StatCard
+          label="Active Students"
+          value={students.length}
+          icon={<Users size={20} strokeWidth={2} />}
+          variant="indigo"
+        />
+        <StatCard
+          label="Total Classes"
+          value={attendance.length}
+          icon={<BookOpen size={20} strokeWidth={2} />}
+          variant="amber"
+        />
         <StatCard
           label="Teaching Hours"
           value={formatDuration(totalMinutes)}
-          icon="⏱️"
+          icon={<Clock size={20} strokeWidth={2} />}
+          variant="sage"
         />
         <StatCard
-          label="Total Earnings"
-          value={`₹${totalEarning.toFixed(0)}`}
-          icon="💰"
-          accent
+          label="All-Time Earnings"
+          value={`₹${allTimeTotalEarning.toLocaleString("en-IN")}`}
+          icon={<IndianRupee size={20} strokeWidth={2} />}
+          variant="terracotta"
         />
       </section>
 
-      {/* -------- Row 2 — This Month -------- */}
-      <section className="dashboard-section">
-        <h2 className="section-title">This Month</h2>
-
-        <div className="stats-grid month-grid">
-          <StatCard label="Classes" value={monthRecords.length} icon="📖" />
-          <StatCard
-            label="Hours"
-            value={formatDuration(monthMinutes)}
-            icon="🕒"
-          />
-          <StatCard
-            label="Earnings"
-            value={`₹${monthEarning.toFixed(0)}`}
-            icon="💵"
-            accent
-          />
-        </div>
-      </section>
-
-      {/* -------- Row 3 — Student Summary + Today -------- */}
+      {/* ── 4 & 5. Lower Columns: Student Breakdown + Recent Classes ── */}
       <section className="dashboard-columns">
-        {/* Student Summary */}
+        {/* Student Earnings Breakdown Card */}
         <div className="dashboard-panel">
-          <h2 className="section-title">Student Summary</h2>
+          <div className="panel-header">
+            <div>
+              <h2 className="section-title">Student Breakdown</h2>
+              <span className="panel-sub">Share of all-time tuition earnings</span>
+            </div>
+            <span className="panel-badge">{students.length} Students</span>
+          </div>
 
           {studentSummary.length === 0 ? (
             <p className="empty-text">No students added yet.</p>
           ) : (
-            <div className="table-scroll">
-              <table className="dash-table">
-                <thead>
-                  <tr>
-                    <th>Student</th>
-                    <th>Classes</th>
-                    <th>Hours</th>
-                    <th>Rate</th>
-                    <th>Earnings</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {studentSummary.map((s) => (
-                    <tr key={s.id}>
-                      <td className="cell-strong">{s.name}</td>
-                      <td>{s.classes}</td>
-                      <td>{s.hours.toFixed(1)}</td>
-                      <td>₹{s.rate}</td>
-                      <td className="cell-earn">₹{s.earning.toFixed(0)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="student-progress-list">
+              {studentSummary.map((s) => {
+                const pct = Math.min(
+                  100,
+                  Math.round((s.earning / maxStudentEarning) * 100)
+                );
+                return (
+                  <div key={s.id} className="student-progress-item">
+                    <div className="student-progress-top">
+                      <div className="student-name-meta">
+                        <span className="student-progress-name">{s.name}</span>
+                        {s.className && (
+                          <span className="student-progress-class">
+                            {s.className}
+                          </span>
+                        )}
+                      </div>
+                      <div className="student-earning-meta">
+                        <span className="student-classes-tag">
+                          {s.classes} classes
+                        </span>
+                        <strong className="student-progress-earning">
+                          ₹{s.earning.toLocaleString("en-IN")}
+                        </strong>
+                      </div>
+                    </div>
+                    <div className="progress-track">
+                      <div
+                        className="progress-fill"
+                        style={{ width: `${Math.max(pct, 4)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Today's Classes */}
+        {/* Recent & Today's Classes Card */}
         <div className="dashboard-panel">
-          <h2 className="section-title">Today's Classes</h2>
+          <div className="panel-header">
+            <div>
+              <h2 className="section-title">Recent Classes</h2>
+              <span className="panel-sub">Latest tuition sessions logged</span>
+            </div>
+            <Link to="/reports" className="see-all-link">
+              <span>See All</span>
+              <ArrowUpRight size={15} strokeWidth={2.4} />
+            </Link>
+          </div>
 
-          {todayRecords.length === 0 ? (
-            <p className="empty-text">No classes scheduled today.</p>
+          {recentRecords.length === 0 ? (
+            <p className="empty-text">No classes recorded yet.</p>
           ) : (
-            <ul className="today-list">
-              {todayRecords.map((r) => {
+            <div className="recent-classes-list">
+              {recentRecords.map((r) => {
                 const student = studentMap[r.studentId];
                 const mins = calculateMinutes(r.startTime, r.endTime);
+                const earn = getSessionEarning(r, student);
+                const initial = student?.name
+                  ? student.name.charAt(0).toUpperCase()
+                  : "?";
 
                 return (
-                  <li key={r.id} className="today-item">
-                    <div className="today-main">
-                      <span className="today-name">
-                        {student?.name || "Unknown"}
-                      </span>
-                      <span className="today-time">
-                        {r.startTime} – {r.endTime}
-                      </span>
+                  <div key={r.id} className="recent-class-item">
+                    <div className="recent-avatar">{initial}</div>
+                    <div className="recent-details">
+                      <div className="recent-top-line">
+                        <span className="recent-name">
+                          {student?.name || "Unknown"}
+                        </span>
+                        <span className="recent-date">
+                          {formatDate(r.date)}
+                        </span>
+                      </div>
+                      <div className="recent-bottom-line">
+                        <span className="recent-time">
+                          {r.startTime} – {r.endTime}
+                        </span>
+                        <span className="recent-duration-tag">
+                          {formatDuration(mins)}
+                        </span>
+                      </div>
                     </div>
-
-                    <span className="today-duration">
-                      {formatDuration(mins)}
-                    </span>
-                  </li>
+                    <div className="recent-earn-badge">+₹{earn}</div>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
           )}
         </div>
       </section>

@@ -1,4 +1,4 @@
-// ✅ Local-timezone-safe date helpers (avoids toISOString() UTC shift bug)
+// Local-timezone-safe date helpers (avoids toISOString() UTC shift bug)
 
 export const getLocalDate = (date = new Date()) => {
   const y = date.getFullYear();

@@ -1,68 +1,57 @@
+import React from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
-  ClipboardCheck,
+  CalendarCheck,
   FileText,
   Download,
   Zap,
 } from "lucide-react";
 import "./Navbar.css";
 
+const NAV_ITEMS = [
+  { path: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { path: "/students", label: "Students", icon: Users },
+  { path: "/attendance", label: "Attendance", icon: CalendarCheck },
+  { path: "/reports", label: "Reports", icon: FileText },
+  { path: "/downloads", label: "Export", icon: Download },
+];
+
 function Navbar() {
   return (
-    <aside className="sidebar">
-      <div className="brand">
+    <aside className="navbar">
+      {/* Brand Header — Desktop Only */}
+      <div className="navbar-brand">
         <div className="brand-icon">
-          <Zap size={22} strokeWidth={2.2} />
+          <Zap size={20} strokeWidth={2.4} />
         </div>
-
-        <div>
+        <div className="brand-titles">
           <h2>Tuition</h2>
           <span>Attendance</span>
         </div>
       </div>
 
-      <nav className="sidebar-nav">
-        <NavLink to="/" end>
-          <span>
-            <LayoutDashboard size={20} strokeWidth={2} />
-          </span>
-          <span className="nav-label">Dashboard</span>
-        </NavLink>
-
-        <NavLink to="/students">
-          <span>
-            <Users size={20} strokeWidth={2} />
-          </span>
-          <span className="nav-label">Students</span>
-        </NavLink>
-
-        <NavLink to="/attendance">
-          <span>
-            <ClipboardCheck size={20} strokeWidth={2} />
-          </span>
-          <span className="nav-label">Attendance</span>
-        </NavLink>
-
-        <NavLink to="/reports">
-          <span>
-            <FileText size={20} strokeWidth={2} />
-          </span>
-          <span className="nav-label">Reports</span>
-        </NavLink>
-
-        <NavLink to="/downloads">
-          <span>
-            <Download size={20} strokeWidth={2} />
-          </span>
-          <span className="nav-label">Export History</span>
-          <span className="nav-label-short">Export</span>
-        </NavLink>
+      {/* Nav Menu */}
+      <nav className="nav-menu">
+        {NAV_ITEMS.map(({ path, label, icon: Icon, end }) => (
+          <NavLink
+            key={path}
+            to={path}
+            end={end}
+            className={({ isActive }) =>
+              `nav-link${isActive ? " active" : ""}`
+            }
+          >
+            <Icon size={19} className="nav-icon" strokeWidth={2} />
+            <span className="nav-label">{label}</span>
+          </NavLink>
+        ))}
       </nav>
 
+      {/* Sidebar Footer — Desktop Only */}
       <div className="sidebar-footer">
-        <span>Offline • Local Storage</span>
+        <span className="offline-pill">Offline · Local</span>
       </div>
     </aside>
   );

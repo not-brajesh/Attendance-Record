@@ -1,4 +1,4 @@
-// ✅ Central calculation helpers — used by Dashboard, Reports, Attendance, XLSX export
+// Central calculation helpers — used by Dashboard, Reports, Attendance, XLSX export
 
 export const calculateMinutes = (startTime, endTime) => {
   if (!startTime || !endTime) return 0;
@@ -34,7 +34,7 @@ export const calculateEarning = (minutes, hourlyRate) => {
   return Math.round((minutes / 60) * Number(hourlyRate || 0));
 };
 
-// ✅ Naya unified earning calculator (Hourly, Per Class, Fixed Monthly)
+// Naya unified earning calculator (Hourly, Per Class, Fixed Monthly)
 export const calculateStudentEarning = (student, totalMinutes = 0, classCount = 0) => {
   if (!student) return 0;
 
@@ -53,7 +53,7 @@ export const calculateStudentEarning = (student, totalMinutes = 0, classCount = 
   return Math.round((totalMinutes / 60) * amount);
 };
 
-// ✅ UI mein clean badge aur formatted rate dikhane ke liye helper
+// UI mein clean badge aur formatted rate dikhane ke liye helper
 export const getPaymentDetails = (student) => {
   const type = student?.paymentType || "hourly";
   const amount = Number(student?.paymentAmount ?? student?.hourlyRate ?? 0);

@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { db } from "../db/database";
 import * as XLSX from "xlsx";
 import {
   calculateMinutes,
   formatDuration,
   calculateEarning,
+  calculateStudentEarning,
 } from "../utils/calculations";
 import {
   getLocalDate,
@@ -13,6 +14,14 @@ import {
   formatDate,
 } from "../utils/dateUtils";
 import StatCard from "../components/StatCard";
+import {
+  BookOpen,
+  Clock,
+  IndianRupee,
+  Download,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import "./Reports.css";
 
 function Reports() {
@@ -23,7 +32,7 @@ function Reports() {
   const [toDate, setToDate] = useState("");
   const [studentFilter, setStudentFilter] = useState("");
 
-  // ✅ Edit states
+  // Edit states
   const [editingId, setEditingId] = useState(null);
   const [editDate, setEditDate] = useState("");
   const [editStudentId, setEditStudentId] = useState("");
@@ -35,28 +44,31 @@ function Reports() {
   }, []);
 
   const loadData = async () => {
-    const studentData = await db.students.toArray();
-    const attendanceData = await db.attendance.toArray();
-
-    setStudents(studentData);
-    setRecords(attendanceData);
+    try {
+      const studentData = await db.students.toArray();
+      const attendanceData = await db.attendance.toArray();
+      setStudents(studentData);
+      setRecords(attendanceData);
+    } catch (err) {
+      console.error("Reports: failed to load data from IndexedDB", err);
+      setStudents([]);
+      setRecords([]);
+    }
   };
 
-  // ✅ This Month range shortcut (using utils — no UTC shift)
+  // Date range shortcuts
   const getMonthRange = () => {
     const now = new Date();
     setFromDate(getMonthStart(now));
     setToDate(getMonthEnd(now));
   };
 
-  // ✅ Today range shortcut
   const getTodayRange = () => {
     const today = getLocalDate();
     setFromDate(today);
     setToDate(today);
   };
 
-  // ✅ All Time
   const getAllTime = () => {
     setFromDate("");
     setToDate("");
@@ -68,7 +80,7 @@ function Reports() {
     return student?.name || "Unknown";
   };
 
-  // ✅ Filter + sort (latest first)
+  // Filter + sort (latest first)
   const filteredRecords = records
     .filter((record) => {
       const dateMatch =
@@ -76,8 +88,7 @@ function Reports() {
         (!toDate || record.date <= toDate);
 
       const studentMatch =
-        !studentFilter ||
-        String(record.studentId) === String(studentFilter);
+        !studentFilter || String(record.studentId) === String(studentFilter);
 
       return dateMatch && studentMatch;
     })
@@ -93,14 +104,7 @@ function Reports() {
     0
   );
 
-  // ✅ Total Earning calculation
-  const totalEarning = filteredRecords.reduce((total, record) => {
-    const student = students.find((s) => s.id === record.studentId);
-    const minutes = calculateMinutes(record.startTime, record.endTime);
-    return total + calculateEarning(minutes, student?.hourlyRate);
-  }, 0);
-
-  // ✅ Student-wise Summary (only students with classes)
+  // Student-wise Summary
   const studentSummary = students
     .map((student) => {
       const studentRecords = filteredRecords.filter(
@@ -113,31 +117,38 @@ function Reports() {
         0
       );
 
+      const earning = calculateStudentEarning(
+        student,
+        minutes,
+        studentRecords.length
+      );
+
       return {
         id: student.id,
         name: student.name,
         classes: studentRecords.length,
         minutes,
         hours: minutes / 60,
-        hourlyRate: Number(student.hourlyRate || 0),
-        earning: calculateEarning(minutes, student.hourlyRate),
+        hourlyRate: Number(student.paymentAmount ?? student.hourlyRate ?? 0),
+        earning,
       };
     })
     .filter((student) => student.classes > 0);
 
-  // ✅ Delete attendance function
+  const totalEarning = studentSummary.reduce((sum, s) => sum + s.earning, 0);
+
+  // Delete attendance
   const deleteAttendance = async (id) => {
     const confirmDelete = confirm(
       "Are you sure you want to delete this attendance?"
     );
-
     if (!confirmDelete) return;
 
     await db.attendance.delete(id);
     loadData();
   };
 
-  // ✅ Edit functions
+  // Edit functions
   const startEdit = (record) => {
     setEditingId(record.id);
     setEditDate(record.date);
@@ -147,7 +158,6 @@ function Reports() {
   };
 
   const saveEdit = async () => {
-    // ✅ Validation
     if (!editDate) {
       alert("Please select a date.");
       return;
@@ -183,19 +193,28 @@ function Reports() {
     setEditingId(null);
   };
 
-  // ✅ Excel export with 2 sheets + dynamic filename
+  const getRecordEarning = (record, student) => {
+    if (!student) return 0;
+    if (student.paymentType === "daily" || student.paymentType === "per_class") {
+      return Number(student.paymentAmount || 0);
+    }
+    const mins = calculateMinutes(record.startTime, record.endTime);
+    return calculateEarning(mins, student.hourlyRate || student.paymentAmount);
+  };
+
+  // Excel export
   const exportExcel = async () => {
     if (filteredRecords.length === 0) {
       alert("No records found for selected filters.");
       return;
     }
 
-    // Sheet 1 — Attendance details
     const data = filteredRecords.map((record) => {
       const student = students.find((s) => s.id === record.studentId);
       const minutes = calculateMinutes(record.startTime, record.endTime);
       const hours = minutes / 60;
-      const rate = Number(student?.hourlyRate || 0);
+      const rate = Number(student?.paymentAmount ?? student?.hourlyRate ?? 0);
+      const earning = getRecordEarning(record, student);
 
       return {
         Date: record.date,
@@ -205,7 +224,7 @@ function Reports() {
         Duration: formatDuration(minutes),
         "Total Hours": hours.toFixed(2),
         "Hourly Rate": rate,
-        "Total Earning": (hours * rate).toFixed(2),
+        "Total Earning": earning.toFixed(2),
       };
     });
 
@@ -213,7 +232,6 @@ function Reports() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
 
-    // Sheet 2 — Student Summary
     const summaryData = studentSummary.map((student) => ({
       Student: student.name,
       Classes: student.classes,
@@ -225,7 +243,6 @@ function Reports() {
     const summarySheet = XLSX.utils.json_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, "Student Summary");
 
-    // ✅ Dynamic filename
     const fileName =
       fromDate && toDate
         ? `Attendance_${fromDate}_to_${toDate}.xlsx`
@@ -233,9 +250,7 @@ function Reports() {
 
     XLSX.writeFile(workbook, fileName);
 
-    // ✅ Save export history
     const exportHours = totalMinutes / 60;
-
     await db.downloads.add({
       fileName,
       createdAt: new Date().toISOString(),
@@ -255,18 +270,18 @@ function Reports() {
     <div className="reports-page">
       <div className="page-header">
         <div>
-          <p className="page-eyebrow">ANALYTICS</p>
+          <p className="page-eyebrow">Analytics</p>
           <h1>Reports</h1>
           <p className="page-subtitle">
-            Attendance reports &amp; earnings overview.
+            Attendance reports, student summaries, and earnings overview.
           </p>
         </div>
       </div>
 
-      {/* ✅ Edit Attendance Form (card style) */}
+      {/* Edit Attendance Form */}
       {editingId && (
-        <div className="edit-card">
-          <h2>Edit Attendance</h2>
+        <div className="edit-card card">
+          <h2>Edit Attendance Session</h2>
 
           <div className="form-section">
             <label>Date</label>
@@ -323,8 +338,8 @@ function Reports() {
         </div>
       )}
 
-      {/* ✅ Filter bar */}
-      <div className="filter-card">
+      {/* Filter Card */}
+      <div className="filter-card card">
         <div className="filter-grid">
           <div className="form-section">
             <label>From Date</label>
@@ -373,32 +388,41 @@ function Reports() {
         </div>
       </div>
 
-      {/* ✅ StatCards */}
+      {/* StatCards */}
       <div className="report-stats">
         <StatCard
           label="Total Classes"
           value={filteredRecords.length}
+          icon={<BookOpen size={20} strokeWidth={2} />}
+          variant="amber"
         />
         <StatCard
           label="Teaching Time"
           value={formatDuration(totalMinutes)}
+          icon={<Clock size={20} strokeWidth={2} />}
+          variant="sage"
         />
         <StatCard
           label="Total Earnings"
-          value={`₹${totalEarning.toFixed(2)}`}
-          accent
+          value={`₹${totalEarning.toLocaleString("en-IN")}`}
+          icon={<IndianRupee size={20} strokeWidth={2} />}
+          variant="terracotta"
         />
       </div>
 
-      {/* ✅ Export button */}
+      {/* Export Action */}
       <div className="report-actions">
-        <button className="btn-primary" onClick={exportExcel}>
-          Export XLSX
+        <button className="btn-primary export-btn" onClick={exportExcel}>
+          <Download size={16} strokeWidth={2.2} />
+          <span>Export XLSX</span>
         </button>
       </div>
 
-      {/* ✅ Student Summary */}
-      <h2>Student Summary</h2>
+      {/* Student Summary Table */}
+      <div className="report-section-header">
+        <h2>Student Summary</h2>
+        <span className="badge-pill">{studentSummary.length} Active</span>
+      </div>
 
       <div className="table-wrapper">
         <table className="data-table">
@@ -407,19 +431,18 @@ function Reports() {
               <th>Student</th>
               <th>Classes</th>
               <th>Total Hours</th>
-              <th>Hourly Rate</th>
+              <th>Rate (₹)</th>
               <th>Total Earning</th>
             </tr>
           </thead>
-
           <tbody>
             {studentSummary.map((student) => (
               <tr key={student.id}>
-                <td>{student.name}</td>
+                <td className="cell-strong">{student.name}</td>
                 <td>{student.classes}</td>
                 <td>{student.hours.toFixed(2)}</td>
                 <td>₹{student.hourlyRate}</td>
-                <td>₹{student.earning.toFixed(2)}</td>
+                <td className="cell-earn">₹{student.earning.toLocaleString("en-IN")}</td>
               </tr>
             ))}
           </tbody>
@@ -427,14 +450,17 @@ function Reports() {
       </div>
 
       {studentSummary.length === 0 && (
-        <div className="empty-state">
+        <div className="empty-state card">
           <h3>No student activity</h3>
           <p>No classes match the selected filters.</p>
         </div>
       )}
 
-      {/* ✅ Attendance Details */}
-      <h2>Attendance Details</h2>
+      {/* Attendance Details Table */}
+      <div className="report-section-header" style={{ marginTop: "32px" }}>
+        <h2>Attendance Details</h2>
+        <span className="badge-pill">{filteredRecords.length} Sessions</span>
+      </div>
 
       <div className="table-wrapper">
         <table className="data-table">
@@ -451,44 +477,43 @@ function Reports() {
               <th>Actions</th>
             </tr>
           </thead>
-
           <tbody>
             {filteredRecords.map((record) => {
-              const minutes = calculateMinutes(
-                record.startTime,
-                record.endTime
-              );
-
-              const student = students.find(
-                (s) => s.id === record.studentId
-              );
-              const rate = Number(student?.hourlyRate || 0);
+              const minutes = calculateMinutes(record.startTime, record.endTime);
+              const student = students.find((s) => s.id === record.studentId);
+              const rate = Number(student?.paymentAmount ?? student?.hourlyRate ?? 0);
               const hours = minutes / 60;
-              const earning = hours * rate;
+              const earning = getRecordEarning(record, student);
 
               return (
                 <tr key={record.id}>
                   <td>{formatDate(record.date)}</td>
-                  <td>{getStudentName(record.studentId)}</td>
+                  <td className="cell-strong">{getStudentName(record.studentId)}</td>
                   <td>{record.startTime}</td>
                   <td>{record.endTime}</td>
-                  <td>{formatDuration(minutes)}</td>
+                  <td>
+                    <span className="duration-tag">{formatDuration(minutes)}</span>
+                  </td>
                   <td>{hours.toFixed(2)}</td>
-                  <td>{rate}</td>
-                  <td>{earning.toFixed(2)}</td>
+                  <td>₹{rate}</td>
+                  <td className="cell-earn">₹{earning.toLocaleString("en-IN")}</td>
                   <td>
                     <div className="row-actions">
                       <button
                         className="btn-icon"
                         onClick={() => startEdit(record)}
+                        title="Edit Session"
                       >
-                        Edit
+                        <Pencil size={13} />
+                        <span>Edit</span>
                       </button>
                       <button
                         className="btn-icon danger"
                         onClick={() => deleteAttendance(record.id)}
+                        title="Delete Session"
                       >
-                        Delete
+                        <Trash2 size={13} />
+                        <span>Delete</span>
                       </button>
                     </div>
                   </td>
@@ -500,7 +525,7 @@ function Reports() {
       </div>
 
       {filteredRecords.length === 0 && (
-        <div className="empty-state">
+        <div className="empty-state card">
           <h3>No attendance records</h3>
           <p>No classes match the selected filters.</p>
         </div>

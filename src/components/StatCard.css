@@ -3,29 +3,53 @@
   align-items: center;
   gap: 14px;
   background: var(--card, #ffffff);
-  border: 1px solid var(--border, #e5e5e7);
-  border-radius: 18px;
+  border: 1px solid var(--border, #eae6df);
+  border-radius: var(--radius, 20px);
   padding: 18px 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card, 0 4px 20px rgba(24, 24, 27, 0.04));
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-hover, 0 8px 28px rgba(24, 24, 27, 0.08));
 }
 
-.stat-card.accent {
-  background: linear-gradient(135deg, #007aff, #0a84ff);
-  color: #ffffff;
-  border-color: transparent;
-  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.35);
-}
-
-.stat-icon {
-  font-size: 1.8rem;
-  line-height: 1;
+.stat-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.stat-icon--brand,
+.stat-icon--terracotta {
+  background: #FDF2EC;
+  color: #D96B38;
+}
+
+.stat-icon--indigo {
+  background: #EEF2FF;
+  color: #5B6AD0;
+}
+
+.stat-icon--sage {
+  background: #ECFDF5;
+  color: #2E7D5B;
+}
+
+.stat-icon--amber {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+.stat-icon--muted {
+  background: #F4F4F5;
+  color: #71717A;
 }
 
 .stat-body {
@@ -36,23 +60,24 @@
   margin: 0;
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: var(--secondary, #86868b);
-}
-
-.stat-card.accent .stat-label {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--subtext, #71717A);
 }
 
 .stat-value {
   margin: 4px 0 0;
-  font-size: 1.5rem;
+  font-size: 1.45rem;
   font-weight: 700;
-  color: var(--text, #1d1d1f);
+  color: var(--text, #18181B);
+  font-variant-numeric: tabular-nums;
   letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
-.stat-card.accent .stat-value {
-  color: #ffffff;
+.stat-sublabel {
+  font-size: 0.75rem;
+  color: var(--subtext, #71717A);
+  margin-top: 2px;
+  display: block;
 }
